@@ -1,5 +1,5 @@
 // ---- CONFIG ----
-const BACKEND_BASE = "https://donate-frontend.onrender.com"; // <-- put your Render backend URL here
+const BACKEND_BASE = "https://donate-backend-0lu0.onrender.com"; // <-- put your Render backend URL here
 const MPESA_ENDPOINT = `${BACKEND_BASE}/api/payments/mpesa`; // must match your working route
 
 // ---- helpers ----
