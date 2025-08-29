@@ -1,121 +1,139 @@
-// ---- CONFIG ----
-const BACKEND_BASE = "https://donate-backend-0lu0.onrender.com"; // <-- put your Render backend URL here
-const MPESA_ENDPOINT = `${BACKEND_BASE}/api/payments/mpesa`; // must match your working route
+// app.js
+(() => {
+  const apiBase = "https://donate-backend.onrender.com"; // change if using custom domain
 
-// ---- helpers ----
-const $ = (q) => document.querySelector(q);
-const yearEl = $("#year"); if (yearEl) yearEl.textContent = new Date().getFullYear();
+  const form = document.getElementById("mpesa-form");
+  const statusDiv = document.getElementById("status");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const donateBtn = document.getElementById("donateBtn");
 
-function normalizePhone(input) {
-  const digits = (input || "").replace(/\D/g, "");
-  if (digits.startsWith("07")) return "254" + digits.slice(1);
-  if (digits.startsWith("254")) return digits;
-  return digits; // fallback: let backend fail with clear error
-}
+  const receipt = document.getElementById("receipt");
+  const receiptTitle = document.getElementById("receipt-title");
+  const receiptMsg = document.getElementById("receipt-msg");
+  const rAmount = document.getElementById("r-amount");
+  const rPhone = document.getElementById("r-phone");
+  const rStatus = document.getElementById("r-status");
+  const rReceipt = document.getElementById("r-receipt");
+  const downloadBtn = document.getElementById("downloadReceipt");
+  const printBtn = document.getElementById("printReceipt");
 
-function fmtKES(v) {
-  const n = Number(v || 0);
-  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(n);
-}
+  let currentCheckoutId = null;
+  let currentPhone = null;
+  let currentAmount = null;
 
-function downloadTxt(filename, content) {
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ---- UI wiring ----
-const form = $("#mpesa-form");
-const statusBox = $("#status");
-const receiptBox = $("#receipt");
-const donateBtn = $("#donateBtn");
-const rAmount = $("#r-amount");
-const rPhone = $("#r-phone");
-const rCrid = $("#r-crid");
-const rMrid = $("#r-mrid");
-const rStatus = $("#r-status");
-const downloadBtn = $("#downloadReceipt");
-
-form?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  statusBox.classList.add("show");
-  statusBox.textContent = "Processing… check your phone for the M-Pesa prompt.";
-  receiptBox.classList.add("hidden");
-  donateBtn.disabled = true;
-
-  const rawPhone = $("#phone").value.trim();
-  const phone = normalizePhone(rawPhone);
-  const amount = $("#amount").value.trim();
-
-  if (!/^(2547\d{8})$/.test(phone)) {
-    statusBox.textContent = "❌ Enter a valid Safaricom number (2547XXXXXXXX).";
-    donateBtn.disabled = false;
-    return;
-  }
-  if (!amount || Number(amount) < 1) {
-    statusBox.textContent = "❌ Enter a valid amount (>= 1).";
-    donateBtn.disabled = false;
-    return;
+  function setStatus(text, cls = "") {
+    statusDiv.textContent = text;
+    statusDiv.className = `status ${cls}`;
   }
 
-  try {
-    const res = await fetch(MPESA_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, amount: Number(amount) })
-    });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById("phone").value.trim();
+    const amount = document.getElementById("amount").value.trim();
 
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      statusBox.textContent = "❌ " + (data.error || "M-Pesa request failed");
+    setStatus("⏳ Sending STK push, please check your phone…", "pending");
+    donateBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${apiBase}/api/payments/mpesa`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, amount })
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+      if (!data.CheckoutRequestID) throw new Error("No CheckoutRequestID");
+
+      currentCheckoutId = data.CheckoutRequestID;
+      currentPhone = phone;
+      currentAmount = amount;
+
+      setStatus("📲 STK push sent. Enter your M-Pesa PIN, then click ‘Confirm Donation’.", "success");
+      confirmBtn.classList.remove("hidden");
+    } catch (err) {
+      console.error(err);
+      setStatus("❌ Could not initiate donation. Please try again.", "error");
       donateBtn.disabled = false;
-      return;
     }
-
-    // Expect Safaricom payload fields
-    const { MerchantRequestID, CheckoutRequestID, ResponseCode, CustomerMessage } = data;
-
-    statusBox.textContent = (ResponseCode === "0")
-      ? "✅ STK push sent. Enter your PIN to complete."
-      : `⚠️ Response: ${CustomerMessage || "Check your phone"}`;
-
-    rAmount.textContent = fmtKES(amount);
-    rPhone.textContent = phone;
-    rCrid.textContent = CheckoutRequestID || "—";
-    rMrid.textContent = MerchantRequestID || "—";
-    rStatus.textContent = "Awaiting PIN / Processing";
-
-    receiptBox.classList.remove("hidden");
-
-    downloadBtn.onclick = () => {
-      const lines = [
-        "Abura Donation (Provisional)",
-        "--------------------------------",
-        `Date: ${new Date().toISOString()}`,
-        `Amount: ${amount} KES`,
-        `Phone: ${phone}`,
-        `MerchantRequestID: ${MerchantRequestID || "-"}`,
-        `CheckoutRequestID: ${CheckoutRequestID || "-"}`,
-        `Status: Awaiting M-Pesa confirmation`,
-        "",
-        "Note: You will receive an official M-Pesa SMS confirmation upon success."
-      ];
-      downloadTxt(`abura-donation-${Date.now()}.txt`, lines.join("\n"));
-    };
-  } catch (err) {
-    statusBox.textContent = "❌ Network error. Please try again.";
-  } finally {
-    donateBtn.disabled = false;
-  }
-});
-
-// simple tabs (PayPal disabled for now)
-document.querySelectorAll(".tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (btn.classList.contains("disabled")) return;
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
   });
-});
+
+  confirmBtn.addEventListener("click", async () => {
+    if (!currentCheckoutId) return;
+    setStatus("🔎 Checking payment status…", "pending");
+    confirmBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${apiBase}/api/payments/mpesa/status/${currentCheckoutId}`);
+      const data = await res.json();
+
+      // Fill common fields
+      rAmount.textContent = currentAmount || (data.amount ?? "—");
+      rPhone.textContent = currentPhone || (data.phone ?? "—");
+      rStatus.textContent = data.status ?? "UNKNOWN";
+
+      // Try pull receipt from callback metadata
+      let receiptNo = "—";
+      if (data.result?.CallbackMetadata?.Item) {
+        const found = data.result.CallbackMetadata.Item.find(i => i.Name === "MpesaReceiptNumber");
+        if (found) receiptNo = found.Value;
+      }
+      rReceipt.textContent = receiptNo;
+
+      if (data.status === "SUCCESS") {
+        receiptTitle.textContent = "✅ Thank you for your Donation";
+        receiptMsg.textContent = "Your support helps us continue our mission.";
+        setStatus("✅ Donation successful!", "success");
+        showReceipt(true);
+      } else if (data.status === "FAILED") {
+        receiptTitle.textContent = "❌ Donation Failed";
+        receiptMsg.textContent = "Thank you for trying to donate to our cause. Please try again.";
+        setStatus("❌ Donation failed.", "error");
+        showReceipt(false);
+      } else if (data.status === "PENDING") {
+        setStatus("⌛ Still processing. Try confirming again in a few seconds.", "pending");
+        confirmBtn.disabled = false;
+      } else {
+        setStatus("🤔 Not found yet. If you just paid, wait a moment and try again.", "pending");
+        confirmBtn.disabled = false;
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus("❌ Could not confirm payment. Try again.", "error");
+      confirmBtn.disabled = false;
+    }
+  });
+
+  function showReceipt(success) {
+    // hide receipt number line if failed
+    [...document.querySelectorAll(".hide-if-fail")].forEach(el => {
+      el.style.display = success ? "" : "none";
+    });
+    receipt.classList.remove("hidden");
+    donateBtn.disabled = false;
+    confirmBtn.disabled = false;
+  }
+
+  // Download receipt
+  downloadBtn.addEventListener("click", () => {
+    const lines = [
+      "Abura Donation Receipt",
+      "----------------------------------",
+      `Phone: ${rPhone.textContent}`,
+      `Amount: KES ${rAmount.textContent}`,
+      `Status: ${rStatus.textContent}`,
+      `Receipt No: ${rReceipt.textContent}`,
+      "",
+      "Thank you for your Donation.",
+      "Abura.org | info@abura.org"
+    ].join("\n");
+    const blob = new Blob([lines], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "abura_receipt.txt";
+    a.click();
+  });
+
+  // Print receipt
+  printBtn.addEventListener("click", () => window.print());
+})();
