@@ -25,14 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ------------------ M-Pesa Flow ------------------ */
-  const API_BASE = "https://donate-backend-0lu0.onrender.com";
-  
-  await fetch(`${API_BASE}/api/payments/mpesa`, { ... })
-  await fetch(`${API_BASE}/api/payments/mpesa/status/${currentCheckoutId}`)
-  await fetch(`${API_BASE}/api/payments/paypal`, { method: "POST" })
-  await fetch(`${API_BASE}/api/payments/card`, { method: "POST" })
-  
-  mpesaForm.addEventListener("submit", async (e) => {
+    mpesaForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     resetUI();
 
@@ -45,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStatus("Sending STK push to your phone...", "pending");
 
     try {
-      const res = await fetch("/api/payments/mpesa", {
+      const res = await fetch("https://donate-backend-0lu0.onrender.com/api/payments/mpesa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, amount }),
@@ -69,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStatus("Checking payment status...", "pending");
 
     try {
-      const res = await fetch(`/api/payments/mpesa/status/${currentCheckoutId}`);
+      const res = await fetch(`https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/${currentCheckoutId}`);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Status check failed");
@@ -106,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStatus("PayPal donations coming soon...", "pending");
 
     try {
-      const res = await fetch("/api/payments/paypal", { method: "POST" });
+      const res = await fetch("https://donate-backend-0lu0.onrender.com/api/payments/paypal", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "PayPal unavailable");
       showStatus(data.message || "PayPal placeholder", "success");
@@ -121,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStatus("Card donations coming soon...", "pending");
 
     try {
-      const res = await fetch("/api/payments/card", { method: "POST" });
+      const res = await fetch("https://donate-backend-0lu0.onrender.com/api/payments/card", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Card unavailable");
       showStatus(data.message || "Card placeholder", "success");
