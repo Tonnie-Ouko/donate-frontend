@@ -57,28 +57,49 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  confirmBtn.addEventListener("click", async () => {
-    if (!currentCheckoutId) return;
-    showStatus("Checking payment status...", "pending");
+  // server.js (snippet for status route)
 
-    try {
-      const res = await fetch(`https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/${currentCheckoutId}`);
-      const data = await res.json();
+app.get("/api/payments/mpesa/status/:checkoutId", async (req, res) => {
+  const { checkoutId } = req.params;
 
-      if (!res.ok) throw new Error(data.error || "Status check failed");
+  try {
+    // 1. First: check temporary Safaricom response (if you stored it in memory/cache)
+    const tempResponse = tempResponses[checkoutId]; // e.g., a simple object in memory
 
-      if (data.status === "SUCCESS") {
-        showStatus("Payment successful 🎉", "success");
-        showReceipt(data);
-      } else if (data.status === "FAILED") {
-        showStatus("Payment failed ❌", "error");
-      } else {
-        showStatus("Payment still pending...", "pending");
+    if (tempResponse) {
+      const status = tempResponse.status; // e.g., SUCCESS / FAILED / PENDING
+      if (status === "SUCCESS" || status === "FAILED") {
+        return res.json({
+          status,
+          amount: tempResponse.amount,
+          phone: tempResponse.phone,
+          result: tempResponse.raw,
+        });
       }
-    } catch (err) {
-      showStatus(err.message, "error");
+      // If still PENDING, then continue to DB check
     }
-  });
+
+    // 2. Fallback: check DB for a more updated result
+    const [rows] = await pool.query("SELECT * FROM payments WHERE checkoutId = ?", [checkoutId]);
+    if (rows.length > 0) {
+      const payment = rows[0];
+      return res.json({
+        status: payment.status,
+        amount: payment.amount,
+        phone: payment.phone,
+        result: payment.raw_response, // your stored JSON/string
+      });
+    }
+
+    // 3. If nothing found
+    res.status(404).json({ error: "Payment not found" });
+
+  } catch (err) {
+    console.error("❌ Status check failed:", err.message);
+    res.status(500).json({ error: "Failed to check payment status" });
+  }
+});
+
 
   function showReceipt(d) {
     document.getElementById("r-amount").textContent = d.amount + " KES";
