@@ -1,11 +1,4 @@
 // app.js
-const API_BASE = "https://donate-backend-0lu0.onrender.com";
-
-await fetch(`${API_BASE}/api/payments/mpesa`, { ... })
-await fetch(`${API_BASE}/api/payments/mpesa/status/${currentCheckoutId}`)
-await fetch(`${API_BASE}/api/payments/paypal`, { method: "POST" })
-await fetch(`${API_BASE}/api/payments/card`, { method: "POST" })
-
 document.addEventListener("DOMContentLoaded", () => {
   const mpesaForm = document.getElementById("mpesa-form");
   const statusEl = document.getElementById("status");
@@ -32,6 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ------------------ M-Pesa Flow ------------------ */
+  const API_BASE = "https://donate-backend-0lu0.onrender.com";
+  
+  await fetch(`${API_BASE}/api/payments/mpesa`, { ... })
+  await fetch(`${API_BASE}/api/payments/mpesa/status/${currentCheckoutId}`)
+  await fetch(`${API_BASE}/api/payments/paypal`, { method: "POST" })
+  await fetch(`${API_BASE}/api/payments/card`, { method: "POST" })
+  
   mpesaForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     resetUI();
