@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // server.js (snippet for status route)
 
-app.get("/api/payments/mpesa/status/:checkoutId", async (req, res) => {
+app.get("https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/:checkoutId", async (req, res) => {
   const { checkoutId } = req.params;
 
   try {
