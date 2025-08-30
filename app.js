@@ -134,6 +134,18 @@
     a.click();
   });
 
+  const paypalBtn = document.getElementById("paypalBtn");
+  paypalBtn.addEventListener("click", () => {
+    alert("PayPal option is coming soon!");
+  });
+
+  const cardBtn = document.getElementById("cardBtn");
+  cardBtn.addEventListener("click", () => {
+  alert("Card option is coming soon!");
+  });
+
+
+  
   // Print receipt
   printBtn.addEventListener("click", () => window.print());
 })();
