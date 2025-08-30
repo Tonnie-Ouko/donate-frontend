@@ -48,3 +48,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .receipt-actions { display: flex; gap: 8px; margin-top: 10px; }
 
 .site-footer { margin-top: 28px; color: var(--muted); }
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
