@@ -1,6 +1,6 @@
 // app.js
 (() => {
-  const apiBase = "https://donate-backend.onrender.com"; // change if using custom domain
+  const apiBase = "https://donate-backend-0lu0.onrender.com"; // change if using custom domain
 
   const form = document.getElementById("mpesa-form");
   const statusDiv = document.getElementById("status");
