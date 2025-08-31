@@ -82,18 +82,11 @@
 
   <script src="app.js"></script>
 
-// Footer year
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-
-  <!-- light anti-copy -->
-  <script>
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('copy', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && ['s','p','u','c'].includes(e.key.toLowerCase())) e.preventDefault();
-    });
-  </script>
+  <footer class="site-footer noselect">
+    <div class="container">
+      <p>© <span id="year"></span> Abura Foundation. All Rights Reserved.</p>
+    </div>
+  </footer>
 
 </body>
 </html>
