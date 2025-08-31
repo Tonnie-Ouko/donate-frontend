@@ -38,13 +38,11 @@
     <section class="donate-card noselect">
       <div class="tabs">
         <button class="tab active" data-tab="mpesa">Donate with M-Pesa</button>
-      <!-- <button class="tab disabled" title="Coming soon">PayPal (coming soon)</button>-->
-        <button class="tab active" data-tab="paypalBtn">Donate with Paypal</button>
-      <!--  <button id="paypalBtn" class="disabled" disabled>Donate with PayPal (Coming Soon)</button> -->
-        <button id="cardBtn" class="disabled" disabled>Donate with Card (Coming Soon)</button>
-        
+        <button class="tab" data-tab="paypal">Donate with PayPal</button>
+        <button class="tab" data-tab="card">Donate with Card</button>
       </div>
 
+      <!-- Mpesa Tab -->
       <div id="tab-mpesa" class="tab-body">
         <form id="mpesa-form" autocomplete="off" novalidate>
           <label for="phone">Phone Number (M-Pesa)</label>
@@ -83,17 +81,77 @@
           </div>
         </div>
       </div>
+
+      <!-- PayPal Tab -->
+      <div id="tab-paypal" class="tab-body hidden">
+        <h3>Donate with PayPal</h3>
+        <label for="paypalAmount">Amount (USD)</label>
+        <input id="paypalAmount" type="number" min="1" step="1" placeholder="e.g. 10" required />
+        <div id="paypal-button-container" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Card Tab -->
+      <div id="tab-card" class="tab-body hidden">
+        <h3>Donate with Card</h3>
+        <p>Credit Card payments are <strong>Coming Soon 🚧</strong></p>
+      </div>
     </section>
   </main>
 
   <footer class="site-footer noselect">
     <div class="container">
       <p>© <span id="year"></span> Abura Foundation. All Rights Reserved.</p>
-      <!-- <p><a href="https://abura.org/privacy-policy" rel="noopener">Privacy</a> · <a href="https://abura.org/terms" rel="noopener">Terms</a></p> -->
     </div>
   </footer>
 
   <script src="app.js"></script>
+
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
+  
+  <!-- Tabs + PayPal -->
+  <script>
+    // Tab switching
+    const tabs = document.querySelectorAll(".tab");
+    const bodies = document.querySelectorAll(".tab-body");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        bodies.forEach(b => b.classList.add("hidden"));
+
+        if (tab.dataset.tab) {
+          document.getElementById("tab-" + tab.dataset.tab).classList.remove("hidden");
+        }
+      });
+    });
+
+    // PayPal button
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        let amount = document.getElementById("paypalAmount").value || "5";
+        return actions.order.create({
+          purchase_units: [{ amount: { value: amount } }]
+        });
+      },
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          document.getElementById("tab-paypal").innerHTML = `
+            <h3>Thank you ${details.payer.name.given_name}!</h3>
+            <p>Your donation of <strong>${details.purchase_units[0].amount.value} USD</strong> was successful.</p>
+            <div class="receipt-actions">
+              <a href="https://donate.abura.org">Donate Again</a> | 
+              <a href="https://abura.org">Back to Home</a>
+            </div>
+          `;
+        });
+      }
+    }).render('#paypal-button-container');
+
+    // Footer year
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
 
   <!-- light anti-copy -->
   <script>
@@ -102,7 +160,6 @@
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && ['s','p','u','c'].includes(e.key.toLowerCase())) e.preventDefault();
     });
-    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
