@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showStatus("Checking payment status...", "pending");
 
     try {
-      const res = await fetch(`https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/${currentCheckoutId}`);
+      const res = await fetch(`/api/payments/mpesa/status/${currentCheckoutId}`);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Status check failed");
