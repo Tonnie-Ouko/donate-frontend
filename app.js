@@ -57,21 +57,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+ // new confirm btn
   confirmBtn.addEventListener("click", async () => {
     if (!currentCheckoutId) return;
     showStatus("Checking payment status...", "pending");
-
+  
     try {
-      const res = await fetch(`/api/payments/mpesa/status/${currentCheckoutId}`);
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Status check failed");
-
-      if (data.status === "SUCCESS") {
-        showStatus("Payment successful 🎉", "success");
-        showReceipt(data);
-      } else if (data.status === "FAILED") {
-        showStatus("Payment failed ❌", "error");
+      // 1️⃣ First: Try Safaricom live status check
+      const liveRes = await fetch(
+        `https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/live/${currentCheckoutId}`
+      );
+      const liveData = await liveRes.json();
+  
+      if (liveRes.ok && liveData.status) {
+        if (liveData.status === "SUCCESS") {
+          showStatus("Payment successful 🎉", "success");
+          return showReceipt(liveData);
+        } else if (liveData.status === "FAILED") {
+          return showStatus("Payment failed ❌", "error");
+        } else {
+          // still pending → fall back to DB
+          console.log("ℹ️ Safaricom still pending, checking DB...");
+        }
+      }
+  
+      // 2️⃣ Fallback: Check DB if Safaricom didn’t confirm
+      const dbRes = await fetch(
+        `https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/${currentCheckoutId}`
+      );
+      const dbData = await dbRes.json();
+  
+      if (!dbRes.ok) throw new Error(dbData.error || "Status check failed");
+  
+      if (dbData.status === "SUCCESS") {
+        showStatus("Payment successful 🎉 (from DB)", "success");
+        showReceipt(dbData);
+      } else if (dbData.status === "FAILED") {
+        showStatus("Payment failed ❌ (from DB)", "error");
       } else {
         showStatus("Payment still pending...", "pending");
       }
@@ -79,6 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
       showStatus(err.message, "error");
     }
   });
+
+//end of confirm btn
   
   function showReceipt(d) {
     document.getElementById("r-amount").textContent = d.amount + " KES";
