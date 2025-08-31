@@ -1,165 +1,61 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Donate to Abura Foundation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Basic hardening -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:;">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="referrer" content="no-referrer">
-  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Abura Foundation Donations</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
 </head>
 <body>
-  <header class="site-header noselect">
-    <div class="container header-inner">
-      <a class="brand" href="https://abura.org" rel="noopener">
-        <img src="https://abura.org/wp-content/uploads/2024/05/cropped-abura.org-removebg-preview.png"
-             alt="Abura" height="48" style="background-color:#fff;padding:4px;border-radius:4px"/>
-      </a>
-      <nav class="main-nav">
-        <a href="https://abura.org/">Home</a>
-        <a href="https://abura.org/about-us/">About</a>
-        <a href="https://abura.org/contact/">Contact</a>
-        <a aria-current="page" class="active" href="#">Donate</a>
-      </nav>
-    </div>
-  </header>
+  <h1>Donate to Abura Foundation</h1>
 
-  <main class="container">
-    <section class="hero">
-      <h1>Support Abura Foundation Today</h1>
-      <p>You can help lots of people by donating little​</p>
-      <p>Your assistance is vital in transforming hope into tangible action—encouraging, empowering, and uniting individuals to enact change in their world.</p>
-    </section>
+  <!-- Buttons to switch between methods -->
+  <div class="payment-methods">
+    <button id="mpesaBtn">M-Pesa</button>
+    <button id="paypalBtn">PayPal</button>
+    <button id="cardBtn">Credit/Debit Card</button>
+  </div>
 
-    <section class="donate-card noselect">
-      <div class="tabs">
-        <button class="tab active" data-tab="mpesa">Donate with M-Pesa</button>
-        <button class="tab" data-tab="paypal">Donate with PayPal</button>
-        <button class="tab" data-tab="card">Donate with Card</button>
-      </div>
+  <!-- Mpesa Form -->
+  <form id="mpesa-form" class="payment-form">
+    <h2>M-Pesa Donation</h2>
+    <label>Phone:</label>
+    <input type="text" id="phone" />
+    <label>Amount (KES):</label>
+    <input type="number" id="amount" />
+    <button id="donateBtn" type="submit">Donate with M-Pesa</button>
+    <button id="confirmBtn" type="button" class="hidden">Confirm Payment</button>
+  </form>
 
-      <!-- Mpesa Tab -->
-      <div id="tab-mpesa" class="tab-body">
-        <form id="mpesa-form" autocomplete="off" novalidate>
-          <label for="phone">Phone Number (M-Pesa)</label>
-          <input id="phone" inputmode="numeric" pattern="[0-9]*" placeholder="07XXXXXXXX or 2547XXXXXXXX" required />
+  <!-- PayPal Form -->
+  <form id="paypal-form" class="payment-form hidden">
+    <h2>PayPal Donation</h2>
+    <label>Amount (USD):</label>
+    <input type="number" id="paypalAmount" />
+    <div id="paypal-button-container"></div>
+  </form>
 
-          <label for="amount">Amount (KES)</label>
-          <input id="amount" type="number" min="1" step="1" placeholder="e.g. 1000" required />
+  <!-- Card Form Placeholder -->
+  <form id="card-form" class="payment-form hidden">
+    <h2>Credit/Debit Card</h2>
+    <p>Coming soon…</p>
+  </form>
 
-          <button id="donateBtn" type="submit">Donate with M-Pesa</button>
-          <p class="hint">We’ll send an STK push to your phone. Enter your M-Pesa PIN to confirm.</p>
-        </form>
-
-        <div class="actions">
-          <button id="confirmBtn" class="hidden">Confirm Donation</button>
-        </div>
-
-        <div id="status" class="status"></div>
-
-        <!-- Final receipt (only after confirmation) -->
-        <div id="receipt" class="receipt hidden">
-          <img class="receipt-logo"
-               src="https://abura.org/wp-content/uploads/2024/05/cropped-abura.org-removebg-preview.png"
-               alt="Abura Logo" />
-          <h3 id="receipt-title">Thank you for your Donation</h3>
-          <p id="receipt-msg">Your support helps us continue our mission.</p>
-          <div class="kv">
-            <div><strong>Amount:</strong> <span id="r-amount">—</span></div>
-            <div><strong>Phone:</strong> <span id="r-phone">—</span></div>
-            <div><strong>Status:</strong> <span id="r-status">—</span></div>
-            <div class="hide-if-fail"><strong>Receipt No.:</strong> <span id="r-receipt">—</span></div>
-          </div>
-          <p class="contact">📞 Contact us: <a href="mailto:donations@abura.org">donations@abura.org</a></p>
-          <div class="receipt-actions">
-            <button id="downloadReceipt">Download Receipt (.txt)</button>
-            <button id="printReceipt">Print</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PayPal Tab -->
-      <div id="tab-paypal" class="tab-body">
-        <h3>Donate with PayPal</h3>
-        <label for="paypalAmount">Amount (USD)</label>
-        <input id="paypalAmount" type="number" min="1" step="1" placeholder="e.g. 10" required />
-        <div id="paypal-button-container" style="margin-top:10px;"></div>
-      </div>
-
-      <!-- Card Tab -->
-      <div id="tab-card" class="tab-body">
-        <h3>Donate with Card</h3>
-        <p>Credit Card payments are <strong>Coming Soon 🚧</strong></p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer noselect">
-    <div class="container">
-      <p>© <span id="year"></span> Abura Foundation. All Rights Reserved.</p>
-    </div>
-  </footer>
+  <!-- Status + Receipt -->
+  <div id="status" class="status"></div>
+  <div id="receipt" class="hidden">
+    <h3>Receipt</h3>
+    <p>Amount: <span id="r-amount"></span></p>
+    <p>Phone/Email: <span id="r-phone"></span></p>
+    <p>Status: <span id="r-status"></span></p>
+    <p>Receipt No: <span id="r-receipt"></span></p>
+    <button id="downloadReceipt">Download Receipt</button>
+    <button id="printReceipt">Print Receipt</button>
+    <a href="/" class="btn">Home</a>
+    <a href="/donate" class="btn">Donate Again</a>
+  </div>
 
   <script src="app.js"></script>
-
-  <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
-  
-  <!-- Tabs + PayPal -->
-  <script>
-    // Tab switching
-    const tabs = document.querySelectorAll(".tab");
-    const bodies = document.querySelectorAll(".tab-body");
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        bodies.forEach(b => b.classList.add("hidden"));
-
-        if (tab.dataset.tab) {
-          document.getElementById("tab-" + tab.dataset.tab).classList.remove("hidden");
-        }
-      });
-    });
-
-    // PayPal button
-    paypal.Buttons({
-      createOrder: function(data, actions) {
-        let amount = document.getElementById("paypalAmount").value || "5";
-        return actions.order.create({
-          purchase_units: [{ amount: { value: amount } }]
-        });
-      },
-      onApprove: function(data, actions) {
-        return actions.order.capture().then(function(details) {
-          document.getElementById("tab-paypal").innerHTML = `
-            <h3>Thank you ${details.payer.name.given_name}!</h3>
-            <p>Your donation of <strong>${details.purchase_units[0].amount.value} USD</strong> was successful.</p>
-            <div class="receipt-actions">
-              <a href="https://donate.abura.org">Donate Again</a> | 
-              <a href="https://abura.org">Back to Home</a>
-            </div>
-          `;
-        });
-      }
-    }).render('#paypal-button-container');
-
-    // Footer year
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-
-  <!-- light anti-copy -->
-  <script>
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('copy', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && ['s','p','u','c'].includes(e.key.toLowerCase())) e.preventDefault();
-    });
-  </script>
 </body>
 </html>
