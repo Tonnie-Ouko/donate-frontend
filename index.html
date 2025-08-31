@@ -3,12 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Abura Foundation Donations</title>
+  <title>Donate to Abura Foundation</title>
   <link rel="stylesheet" href="style.css" />
   <!-- PayPal SDK -->
   <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+  <!-- Basic hardening -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https:;">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
 </head>
 <body>
+  
+  <header class="site-header noselect">
+    <div class="container header-inner">
+      <a class="brand" href="https://abura.org" rel="noopener">
+        <img src="https://abura.org/wp-content/uploads/2024/05/cropped-abura.org-removebg-preview.png"
+             alt="Abura" height="48" style="background-color:#fff;padding:4px;border-radius:4px"/>
+      </a>
+      <nav class="main-nav">
+        <a href="https://abura.org/">Home</a>
+        <a href="https://abura.org/about-us/">About</a>
+        <a href="https://abura.org/contact/">Contact</a>
+        <a aria-current="page" class="active" href="#">Donate</a>
+      </nav>
+    </div>
+  </header>
+  
   <div class="container">
     <h1 class="title">Donate to Abura Foundation</h1>
 
