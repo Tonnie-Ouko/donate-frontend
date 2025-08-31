@@ -81,5 +81,19 @@
   </div>
 
   <script src="app.js"></script>
+
+// Footer year
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
+  <!-- light anti-copy -->
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('copy', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && ['s','p','u','c'].includes(e.key.toLowerCase())) e.preventDefault();
+    });
+  </script>
+
 </body>
 </html>
