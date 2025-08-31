@@ -1,12 +1,17 @@
 // app.js
 document.addEventListener("DOMContentLoaded", () => {
   const mpesaForm = document.getElementById("mpesa-form");
+  const paypalForm = document.getElementById("paypal-form");
+  const cardForm = document.getElementById("card-form");
+
+  const mpesaBtn = document.getElementById("mpesaBtn");
+  const paypalBtn = document.getElementById("paypalBtn");
+  const cardBtn = document.getElementById("cardBtn");
+
   const statusEl = document.getElementById("status");
   const confirmBtn = document.getElementById("confirmBtn");
   const receipt = document.getElementById("receipt");
   const donateBtn = document.getElementById("donateBtn");
-  const paypalBtn = document.getElementById("paypalBtn");
-  const cardBtn = document.getElementById("cardBtn");
 
   let currentCheckoutId = null;
 
@@ -24,8 +29,19 @@ document.addEventListener("DOMContentLoaded", () => {
     currentCheckoutId = null;
   }
 
+  function switchForm(formId) {
+    [mpesaForm, paypalForm, cardForm].forEach(f => f.classList.add("hidden"));
+    document.getElementById(formId).classList.remove("hidden");
+    resetUI();
+  }
+
+  /* ------------------ Switch Buttons ------------------ */
+  mpesaBtn.addEventListener("click", () => switchForm("mpesa-form"));
+  paypalBtn.addEventListener("click", () => switchForm("paypal-form"));
+  cardBtn.addEventListener("click", () => switchForm("card-form"));
+
   /* ------------------ M-Pesa Flow ------------------ */
-    mpesaForm.addEventListener("submit", async (e) => {
+  mpesaForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     resetUI();
 
@@ -57,38 +73,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
- // new confirm btn
   confirmBtn.addEventListener("click", async () => {
     if (!currentCheckoutId) return;
     showStatus("Checking payment status...", "pending");
-  
+
     try {
-      // 1️⃣ First: Try Safaricom live status check
+      // 1️⃣ First: Safaricom live status
       const liveRes = await fetch(
         `https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/live/${currentCheckoutId}`
       );
       const liveData = await liveRes.json();
-  
+
       if (liveRes.ok && liveData.status) {
         if (liveData.status === "SUCCESS") {
           showStatus("Payment successful 🎉", "success");
           return showReceipt(liveData);
         } else if (liveData.status === "FAILED") {
           return showStatus("Payment failed ❌", "error");
-        } else {
-          // still pending → fall back to DB
-          console.log("ℹ️ Safaricom still pending, checking DB...");
         }
       }
-  
-      // 2️⃣ Fallback: Check DB if Safaricom didn’t confirm
+
+      // 2️⃣ Fallback: DB check
       const dbRes = await fetch(
         `https://donate-backend-0lu0.onrender.com/api/payments/mpesa/status/${currentCheckoutId}`
       );
       const dbData = await dbRes.json();
-  
+
       if (!dbRes.ok) throw new Error(dbData.error || "Status check failed");
-  
+
       if (dbData.status === "SUCCESS") {
         showStatus("Payment successful 🎉 (from DB)", "success");
         showReceipt(dbData);
@@ -102,57 +114,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-//end of confirm btn
-  
+  /* ------------------ PayPal Flow ------------------ */
+  if (document.getElementById("paypal-button-container")) {
+    paypal.Buttons({
+      createOrder: (data, actions) => {
+        const amount = document.getElementById("paypalAmount").value.trim();
+        if (!amount) {
+          showStatus("Enter an amount for PayPal donation", "error");
+          return;
+        }
+        return actions.order.create({
+          purchase_units: [{ amount: { value: amount } }],
+        });
+      },
+      onApprove: (data, actions) => {
+        return actions.order.capture().then((details) => {
+          const donation = {
+            amount: details.purchase_units[0].amount.value,
+            email: details.payer.email_address,
+            status: "SUCCESS",
+            receiptId: details.id,
+          };
+          showStatus("PayPal payment successful 🎉", "success");
+          showReceipt(donation);
+        });
+      },
+      onError: (err) => {
+        showStatus("PayPal error: " + err.message, "error");
+      },
+    }).render("#paypal-button-container");
+  }
+
+  /* ------------------ Card Flow (placeholder) ------------------ */
+  cardBtn.addEventListener("click", () => {
+    switchForm("card-form");
+    showStatus("Card donations coming soon...", "pending");
+  });
+
+  /* ------------------ Receipt ------------------ */
   function showReceipt(d) {
-    document.getElementById("r-amount").textContent = d.amount + " KES";
-    document.getElementById("r-phone").textContent = d.phone || "—";
+    document.getElementById("r-amount").textContent = (d.amount || "—") + (d.currency || " KES");
+    document.getElementById("r-phone").textContent = d.phone || d.email || "—";
     document.getElementById("r-status").textContent = d.status;
-    document.getElementById("r-receipt").textContent = d.result?.Body?.stkCallback?.CallbackMetadata?.Item?.find(i => i.Name === "MpesaReceiptNumber")?.Value || "—";
+    document.getElementById("r-receipt").textContent =
+      d.receiptId ||
+      d.result?.Body?.stkCallback?.CallbackMetadata?.Item?.find(i => i.Name === "MpesaReceiptNumber")?.Value ||
+      "—";
 
     if (d.status !== "SUCCESS") {
-      document.querySelectorAll(".hide-if-fail").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".hide-if-fail").forEach(el => (el.style.display = "none"));
     }
-
     receipt.classList.remove("hidden");
   }
 
-  /* ------------------ PayPal Flow (placeholder) ------------------ */
-  paypalBtn.addEventListener("click", async () => {
-    resetUI();
-    showStatus("PayPal donations coming soon...", "pending");
-
-    try {
-      const res = await fetch("https://donate-backend-0lu0.onrender.com/api/payments/paypal", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "PayPal unavailable");
-      showStatus(data.message || "PayPal placeholder", "success");
-    } catch (err) {
-      showStatus(err.message, "error");
-    }
-  });
-
-  /* ------------------ Card Flow (placeholder) ------------------ */
-  cardBtn.addEventListener("click", async () => {
-    resetUI();
-    showStatus("Card donations coming soon...", "pending");
-
-    try {
-      const res = await fetch("https://donate-backend-0lu0.onrender.com/api/payments/card", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Card unavailable");
-      showStatus(data.message || "Card placeholder", "success");
-    } catch (err) {
-      showStatus(err.message, "error");
-    }
-  });
-
-  /* ------------------ Receipt Actions ------------------ */
   document.getElementById("downloadReceipt").addEventListener("click", () => {
     const txt = `
 Abura Foundation Donation Receipt
 Amount: ${document.getElementById("r-amount").textContent}
-Phone: ${document.getElementById("r-phone").textContent}
+Phone/Email: ${document.getElementById("r-phone").textContent}
 Status: ${document.getElementById("r-status").textContent}
 Receipt No: ${document.getElementById("r-receipt").textContent}
     `.trim();
